@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,9 +16,14 @@ type ModalProps = {
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !mounted) return;
 
     const previous = document.activeElement as HTMLElement | null;
     panelRef.current?.focus();
@@ -34,12 +40,12 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
       document.body.style.overflow = '';
       previous?.focus();
     };
-  }, [open, onClose]);
+  }, [open, mounted, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto px-4 pb-8 pt-10 sm:px-6 sm:pb-10 sm:pt-16">
+  return createPortal(
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/40"
@@ -53,7 +59,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          'relative z-10 max-h-[calc(100vh-6.5rem)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-lg sm:max-w-lg sm:p-6',
+          'relative z-10 max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-lg outline-none sm:max-w-lg sm:p-6',
           className
         )}
       >
@@ -72,6 +78,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
