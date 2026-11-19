@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand: #0f766e;
+  --brand-hover: #0d9488;
+  --brand-soft: #f0fdfa;
+  --surface: #f4f7f8;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  color: var(--text);
+  background: var(--surface);
+  font-family: var(--font-sans), 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+::selection {
+  background: #ccfbf1;
+  color: #134e4a;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.page-enter {
+  animation: page-enter 320ms ease-out both;
+}
+
+.stagger-item {
+  animation: stagger-in 420ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .stagger-item {
+    animation: none;
+  }
+}
