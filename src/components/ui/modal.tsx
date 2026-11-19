@@ -39,7 +39,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6">
       <button
         type="button"
         className="absolute inset-0 bg-slate-900/40"
@@ -53,7 +53,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          'relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-t-xl border border-slate-200 bg-white p-5 shadow-lg sm:max-w-lg sm:rounded-xl sm:p-6',
+          'relative z-10 max-h-[calc(100vh-2rem)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-lg sm:max-h-[calc(100vh-4.5rem)] sm:max-w-lg sm:p-6',
           className
         )}
       >
