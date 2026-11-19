@@ -1,21 +1,28 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CalendarDays, Phone, Stethoscope, UserRound } from 'lucide-react';
 import { api, ApiRequestError } from '@/lib/api';
+import { queryKeys } from '@/lib/query-keys';
 import { doctorName, formatFullDate } from '@/lib/utils';
-import type { Doctor, Patient } from '@/types';
+import type { Appointment, Doctor, Paginated, Patient } from '@/types';
 import { Avatar } from '@/components/ui/avatar';
 import { Tag } from '@/components/ui/tag';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RelativeDate } from '@/components/ui/relative-date';
+import { useToast } from '@/components/ui/toast';
 
 export default function PatientHistoryPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [note, setNote] = useState('');
   const id = params.id;
 
   const patientQuery = useQuery({
@@ -28,6 +35,27 @@ export default function PatientHistoryPage() {
         if (err instanceof ApiRequestError && err.status === 401) router.replace('/login');
         throw err;
       }
+    },
+  });
+
+  const visitsQuery = useQuery({
+    queryKey: queryKeys.appointments({ patient: id, limit: '5' }),
+    enabled: Boolean(id),
+    queryFn: () =>
+      api<Paginated<Appointment>>('/appointments', {
+        params: { patient: id, limit: '5', page: '1' },
+      }),
+  });
+
+  const addNote = useMutation({
+    mutationFn: () => api(`/patients/${id}/notes`, { method: 'POST', body: { body: note } }),
+    onSuccess: async () => {
+      setNote('');
+      await queryClient.invalidateQueries({ queryKey: ['patients', id] });
+      toast('Note added', 'success');
+    },
+    onError: (err: unknown) => {
+      toast(err instanceof ApiRequestError ? err.message : "Couldn't add the note.", 'error');
     },
   });
 
@@ -62,21 +90,17 @@ export default function PatientHistoryPage() {
   const doctor = patient.doctor as Doctor | string;
   const doctorId = typeof doctor === 'string' ? doctor : doctor?._id;
 
+  const notes = patient.notes || [];
   const timeline = [
+    ...notes.map((item) => ({
+      title: 'Visit note',
+      detail: item.body,
+      at: item.createdAt,
+    })),
     {
       title: 'Record created',
-      detail: `Patient added under ${doctorName(doctor)}.`,
+      detail: `Patient added under ${doctorName(doctor)}. Status: ${patient.status || 'Active'}.`,
       at: patient.createdAt,
-    },
-    {
-      title: 'Primary condition logged',
-      detail: `${patient.condition} recorded as the active condition.`,
-      at: patient.createdAt,
-    },
-    {
-      title: 'Current status',
-      detail: 'Active under clinic follow-up. No discharge date recorded.',
-      at: new Date().toISOString(),
     },
   ];
 
@@ -100,8 +124,17 @@ export default function PatientHistoryPage() {
             <p className="mt-1 text-sm text-slate-500">
               {patient.gender} · {patient.age} years · Patient history
             </p>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-2">
               <Tag>{patient.condition}</Tag>
+              <Badge
+                className={
+                  (patient.status || 'Active') === 'Discharged'
+                    ? 'bg-slate-100 text-slate-600'
+                    : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+                }
+              >
+                {patient.status || 'Active'}
+              </Badge>
             </div>
           </div>
         </div>
@@ -130,7 +163,7 @@ export default function PatientHistoryPage() {
           <p className="mt-1 text-sm text-slate-500">Key events for this patient record.</p>
           <ol className="mt-5 space-y-4">
             {timeline.map((item, index) => (
-              <li key={item.title} className="relative flex gap-3 pl-2">
+              <li key={`${item.title}-${item.at}-${index}`} className="relative flex gap-3 pl-2">
                 <div className="flex flex-col items-center">
                   <span className="mt-1 h-2.5 w-2.5 rounded-full bg-brand" />
                   {index < timeline.length - 1 ? (
@@ -149,20 +182,52 @@ export default function PatientHistoryPage() {
           </ol>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
-          <h2 className="text-base font-semibold text-slate-900">Care notes</h2>
-          <ul className="mt-3 space-y-2 text-sm text-slate-600">
-            <li>
-              Presenting condition:{' '}
-              <span className="font-medium text-slate-800">{patient.condition}</span>
-            </li>
-            <li>
-              Follow-up owned by{' '}
-              <span className="font-medium text-slate-800">{doctorName(doctor)}</span>
-              {typeof doctor !== 'string' && doctor?.hospital ? ` at ${doctor.hospital}` : ''}.
-            </li>
-            <li>Status: Active clinic record.</li>
-          </ul>
+        <div className="space-y-5">
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="text-base font-semibold text-slate-900">Add a visit note</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              What happened in the latest visit. This stays on the record.
+            </p>
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder="Symptoms, advice, or follow-up..."
+              className="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+            <div className="mt-3 flex justify-end">
+              <Button
+                type="button"
+                loading={addNote.isPending}
+                disabled={note.trim().length < 2}
+                onClick={() => addNote.mutate()}
+              >
+                Save note
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="text-base font-semibold text-slate-900">Appointments</h2>
+            {visitsQuery.data?.data.length ? (
+              <ul className="mt-3 space-y-3">
+                {visitsQuery.data.data.map((visit) => (
+                  <li key={visit._id} className="text-sm text-slate-700">
+                    <span className="font-medium text-slate-900">{visit.reason}</span>
+                    <span className="mt-0.5 block text-slate-500">
+                      {formatFullDate(visit.scheduledAt)} · {visit.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">No appointments for this patient yet.</p>
+            )}
+            <Link href="/appointments" className="mt-3 inline-block text-sm font-medium text-brand">
+              Schedule one
+            </Link>
+          </div>
         </div>
       </div>
     </div>

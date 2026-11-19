@@ -8,4 +8,5 @@ export const queryKeys = {
   patients: (params: Record<string, string>) => ['patients', params] as const,
   patientFilters: ['patients', 'filters'] as const,
   dashboard: ['dashboard'] as const,
+  appointments: (params: Record<string, string>) => ['appointments', params] as const,
 };

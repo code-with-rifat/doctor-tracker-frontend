@@ -43,6 +43,7 @@ export function PatientForm({
       gender: 'Male',
       phone: '',
       condition: '',
+      status: 'Active',
       doctor: '',
       ...defaultValues,
     },
@@ -71,6 +72,15 @@ export function PatientForm({
       </div>
       <Input label="Phone" error={errors.phone?.message} {...register('phone')} />
       <Input label="Condition" error={errors.condition?.message} {...register('condition')} />
+      <Select
+        label="Status"
+        error={errors.status?.message}
+        options={[
+          { label: 'Active', value: 'Active' },
+          { label: 'Discharged', value: 'Discharged' },
+        ]}
+        {...register('status')}
+      />
       {showDoctorField ? (
         <Select
           label="Doctor"

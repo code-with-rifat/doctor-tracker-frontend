@@ -29,9 +29,19 @@ export const patientSchema = z.object({
     .max(20)
     .regex(/^[+\d][\d\s\-()]+$/, 'Enter a valid phone number'),
   condition: z.string().trim().min(2, 'Condition is required').max(120),
+  status: z.enum(['Active', 'Discharged']),
   doctor: z.string().optional(),
+});
+
+export const appointmentSchema = z.object({
+  patient: z.string().min(1, 'Patient is required'),
+  doctor: z.string().min(1, 'Doctor is required'),
+  scheduledAt: z.string().min(1, 'Date and time are required'),
+  reason: z.string().trim().min(2, 'Reason is required').max(200),
+  status: z.enum(['Scheduled', 'Completed', 'Cancelled']),
 });
 
 export type LoginValues = z.infer<typeof loginSchema>;
 export type DoctorValues = z.infer<typeof doctorSchema>;
 export type PatientValues = z.infer<typeof patientSchema>;
+export type AppointmentValues = z.infer<typeof appointmentSchema>;

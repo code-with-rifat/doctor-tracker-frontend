@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { Activity, Stethoscope, UserPlus, Users } from 'lucide-react';
+import { Activity, CalendarDays, Stethoscope, UserPlus, Users } from 'lucide-react';
 import { api, ApiRequestError } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
 import type { DashboardStats } from '@/types';
@@ -136,6 +136,14 @@ export default function DashboardPage() {
                 value={data.cards.averagePatientsPerDoctor}
                 icon={Activity}
                 href="/doctors"
+              />
+            </div>
+            <div className="stagger-item" style={{ animationDelay: '200ms' }}>
+              <StatCard
+                label="Upcoming visits"
+                value={data.cards.upcomingAppointments ?? 0}
+                icon={CalendarDays}
+                href="/appointments"
               />
             </div>
           </div>

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Activity,
+  CalendarDays,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -21,6 +22,7 @@ const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/doctors', label: 'Doctors', icon: Stethoscope },
   { href: '/patients', label: 'Patients', icon: Users },
+  { href: '/appointments', label: 'Appointments', icon: CalendarDays },
 ];
 
 export function Sidebar() {

@@ -21,8 +21,19 @@ export type Patient = {
   gender: 'Male' | 'Female' | 'Other';
   phone: string;
   condition: string;
+  status?: 'Active' | 'Discharged';
+  notes?: { _id: string; body: string; createdAt: string }[];
   doctor: Doctor | string;
   createdAt: string;
+};
+
+export type Appointment = {
+  _id: string;
+  patient: Pick<Patient, '_id' | 'name' | 'phone' | 'condition' | 'status'> | string;
+  doctor: Pick<Doctor, '_id' | 'name' | 'specialization' | 'hospital'> | string;
+  scheduledAt: string;
+  reason: string;
+  status: 'Scheduled' | 'Completed' | 'Cancelled';
 };
 
 export type Pagination = {
@@ -43,6 +54,7 @@ export type DashboardStats = {
     totalPatients: number;
     patientsThisMonth: number;
     averagePatientsPerDoctor: number;
+    upcomingAppointments?: number;
   };
   charts: {
     patientsPerDoctor: { doctorId: string; name: string; count: number }[];

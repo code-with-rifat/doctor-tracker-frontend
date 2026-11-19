@@ -24,6 +24,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar } from '@/components/ui/avatar';
 import { Tag } from '@/components/ui/tag';
+import { Badge } from '@/components/ui/badge';
 import { Modal } from '@/components/ui/modal';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RowActions } from '@/components/ui/row-actions';
@@ -46,6 +47,7 @@ function PatientsPageContent() {
       search: params.search || '',
       condition: params.condition || '',
       doctor: params.doctor || '',
+      status: params.status || '',
       from: params.from || '',
       to: params.to || '',
     }),
@@ -53,7 +55,7 @@ function PatientsPageContent() {
   );
 
   const hasFilters = Boolean(
-    query.search || query.condition || query.doctor || query.from || query.to
+    query.search || query.condition || query.doctor || query.status || query.from || query.to
   );
 
   const patientsQuery = useQuery({
@@ -158,6 +160,22 @@ function PatientsPageContent() {
       cell: (row) => <Tag>{row.condition}</Tag>,
     },
     {
+      key: 'status',
+      header: 'Status',
+      hideBelow: 'md',
+      cell: (row) => (
+        <Badge
+          className={
+            (row.status || 'Active') === 'Discharged'
+              ? 'bg-slate-100 text-slate-600'
+              : 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+          }
+        >
+          {row.status || 'Active'}
+        </Badge>
+      ),
+    },
+    {
       key: 'doctor',
       header: 'Doctor',
       truncate: true,
@@ -180,12 +198,13 @@ function PatientsPageContent() {
     }
     downloadCsv(
       `patients-page-${query.page}.csv`,
-      ['Name', 'Age', 'Gender', 'Condition', 'Doctor', 'Phone'],
+      ['Name', 'Age', 'Gender', 'Condition', 'Status', 'Doctor', 'Phone'],
       patientsQuery.data.data.map((p) => [
         p.name,
         String(p.age),
         p.gender,
         p.condition,
+        p.status || 'Active',
         doctorName(p.doctor as Doctor | string),
         p.phone,
       ])
@@ -228,6 +247,7 @@ function PatientsPageContent() {
             search: null,
             condition: null,
             doctor: null,
+            status: null,
             from: null,
             to: null,
             page: 1,
@@ -251,6 +271,16 @@ function PatientsPageContent() {
           value={query.doctor}
           onChange={(e) => setParams({ doctor: e.target.value, page: 1 })}
           options={doctorOptions}
+        />
+        <Select
+          label="Status"
+          placeholder="All"
+          value={query.status}
+          onChange={(e) => setParams({ status: e.target.value, page: 1 })}
+          options={[
+            { label: 'Active', value: 'Active' },
+            { label: 'Discharged', value: 'Discharged' },
+          ]}
         />
         <Input
           label="From"
@@ -352,6 +382,7 @@ function PatientsPageContent() {
               gender: editPatient.gender,
               phone: editPatient.phone,
               condition: editPatient.condition,
+              status: editPatient.status || 'Active',
               doctor:
                 typeof editPatient.doctor === 'string'
                   ? editPatient.doctor
